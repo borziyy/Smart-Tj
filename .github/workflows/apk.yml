@@ -1,0 +1,23 @@
+name: Build APK v2
+on: workflow_dispatch
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+      CI: 1
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: unzip -o smart-tj.zip
+      - run: npm install
+        working-directory: smart-tj
+      - run: npx expo install --fix
+        working-directory: smart-tj
+      - run: npm install -g eas-cli
+      - run: eas init --id ${{ secrets.EAS_PROJECT_ID }} --force --non-interactive
+        working-directory: smart-tj
+      - run: eas build -p android --profile preview --non-interactive --no-wait
+        working-directory: smart-tj
