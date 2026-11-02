@@ -1,0 +1,30 @@
+name: Build APK v4
+on: workflow_dispatch
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+      CI: 1
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: unzip -o smart-tj.zip -d zip
+      - run: npx create-expo-app@latest smartapp --template blank@sdk-54 --yes
+      - name: Copy app
+        working-directory: smartapp
+        run: |
+          rm -f App.js index.js
+          cp -r ../zip/smart-tj/app ../zip/smart-tj/src .
+          cp -r ../zip/smart-tj/assets/. assets/
+          cp ../zip/smart-tj/app.json ../zip/smart-tj/eas.json .
+          npm pkg set main=expo-router/entry
+          npx expo install expo-router expo-linear-gradient expo-haptics expo-splash-screen expo-system-ui expo-linking expo-constants expo-status-bar react-native-safe-area-context react-native-screens @react-native-async-storage/async-storage @expo/vector-icons
+          npx expo install --fix
+      - run: npm install -g eas-cli
+      - run: eas init --id ${{ secrets.EAS_PROJECT_ID }} --force --non-interactive
+        working-directory: smartapp
+      - run: eas build -p android --profile preview --non-interactive --no-wait
+        working-directory: smartapp
